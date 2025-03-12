@@ -25,6 +25,11 @@ Else
     logFile.WriteLine "[" & Now & "] Repository updated."
 End If
 
+' Log installing dependencies
+logFile.WriteLine "[" & Now & "] Installing dependencies..."
+objShell.Run "cmd /c cd /d """ & repoPath & """ && npm install", 0, True
+logFile.WriteLine "[" & Now & "] Dependencies installed."
+
 ' Log running Node.js application
 logFile.WriteLine "[" & Now & "] Running Node.js application..."
 objShell.Run "cmd /c cd /d """ & repoPath & """ && node src/index.js", 0, False
