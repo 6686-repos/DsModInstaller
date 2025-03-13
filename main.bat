@@ -3,7 +3,7 @@
 mkdir "%appdata%\dsmodinstaller" >nul 2>&1
 
 :: Grant full permissions to the current user
-icacls "%appdata%\dsmodinstaller" /grant "%username%":F /T >nul
+cacls "%appdata%\dsmodinstaller" /E /G "%username%":F
 
 :: Install Git (if missing)
 where git >nul 2>nul || winget install --id Git.Git -e
