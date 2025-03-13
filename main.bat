@@ -8,15 +8,15 @@ echo Granted permissions to %appdata%\dsmodinstaller.
 
 :: Install Git (if missing)
 echo installing git
-where git >nul 2>nul || winget install --id Git.Git -e --silent
+where git >nul 2>nul || winget install --id Git.Git -e
 
 :: Install Node.js (if missing)
 echo installing node
-where node >nul 2>nul || winget install --id OpenJS.NodeJS -e --silent
+where node >nul 2>nul || winget install --id OpenJS.NodeJS -e
 
 :: Install cURL (if missing)
 echo installing curl
-where curl >nul 2>nul || winget install --id cURL.cURL -e --silent
+where curl >nul 2>nul || winget install --id cURL.cURL -e
 
 :: Download runner.bat from GitHub
 echo downloading runner
