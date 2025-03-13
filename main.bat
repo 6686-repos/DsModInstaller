@@ -2,10 +2,6 @@
 :: Create dsmodinstaller directory
 mkdir "%appdata%\dsmodinstaller" >nul 2>&1
 
-:: Grant full permissions to the current user
-icacls "%appdata%\dsmodinstaller" /grant "%username%":F /T >nul
-echo Granted permissions to %appdata%\dsmodinstaller.
-
 :: Install Git (if missing)
 echo installing git
 where git >nul 2>nul || winget install --id Git.Git -e
