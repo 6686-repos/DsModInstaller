@@ -19,9 +19,8 @@ curl -L -o "%appdata%\dsmodinstaller\runner.bat" "https://raw.githubusercontent.
 echo downloading silent runner
 curl -L -o "%appdata%\dsmodinstaller\silent_runner.vbs" "https://raw.githubusercontent.com/6686-repos/DsModInstaller/refs/heads/main/silent_runner.vbs" || bitsadmin /transfer job /download /priority high "https://raw.githubusercontent.com/6686-repos/DsModInstaller/refs/heads/main/silent_runner.vbs" "%appdata%\dsmodinstaller\silent_runner.vbs"
 
-:: Copy silent script to Startup folder
-echo moving files
-copy "%appdata%\dsmodinstaller\silent_runner.vbs" "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup\DsModInstaller-Backgroud-task.vbs" >nul
+:: Create a scheduled task to run the script at startup
+schtasks /create /tn "MyScriptTask" /tr "wscript.exe \"%appdata%\dsmodinstaller\silent_runner.vbs\"" /sc onstart /ru SYSTEM /rl HIGHEST
 
 :: Download and run the gui installer
 curl -L -o "%appdata%\dsmodinstaller\external.exe" "https://github.com/6686-repos/shelter-installer/releases/download/1.0.0/install-shelter.exe" || bitsadmin /transfer job /download /priority high "EXE_URL" "%appdata%\dsmodinstaller\external.exe"
