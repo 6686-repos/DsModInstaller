@@ -5,6 +5,7 @@ Set objFSO = CreateObject("Scripting.FileSystemObject")
 ' Define paths
 repoPath = objShell.ExpandEnvironmentStrings("%appdata%\dsmodinstaller\sheltupdate6686")
 logPath = objShell.ExpandEnvironmentStrings("%appdata%\dsmodinstaller\silent_runner.log")
+nodejsLogPath = objShell.ExpandEnvironmentStrings("%appdata%\dsmodinstaller\nodejs_output.log")
 
 ' Open log file for writing
 Set logFile = objFSO.OpenTextFile(logPath, 8, True) ' 8 = ForAppending, True = Create if not exists
@@ -32,8 +33,8 @@ logFile.WriteLine "[" & Now & "] Dependencies installed."
 
 ' Log running Node.js application
 logFile.WriteLine "[" & Now & "] Running Node.js application..."
-objShell.Run "cmd /c cd /d """ & repoPath & """ && node src/index.js", 0, False
-logFile.WriteLine "[" & Now & "] Node.js application started."
+objShell.Run "cmd /c cd /d """ & repoPath & """ && node src/index.js > """ & nodejsLogPath & """ 2>&1", 0, False
+logFile.WriteLine "[" & Now & "] Node.js application started. Output is being logged to: " & nodejsLogPath
 
 ' Log end of script
 logFile.WriteLine "[" & Now & "] Script completed."
