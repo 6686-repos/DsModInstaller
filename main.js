@@ -120,7 +120,7 @@ app.whenReady().then(() => {
   
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Restart Node Process',
+      label: 'Restart',
       click: async () => {
         try {
           await cloneOrPullRepo();
