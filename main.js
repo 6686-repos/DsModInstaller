@@ -1,4 +1,8 @@
-const { app, Tray, Menu } = require('electron');
+const { app, Tray, Menu, nativeImage, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
+
+app.commandLine.appendSwitch('high-dpi-support', 'true');
+app.commandLine.appendSwitch('force-device-scale-factor', '1');
 const path = require('path');
 const simpleGit = require('simple-git');
 const { spawn } = require('child_process');
@@ -115,10 +119,62 @@ async function initialize() {
   }
 }
 
+function checkForUpdates() {
+  autoUpdater.logger = require('electron-log');
+  autoUpdater.logger.transports.file.level = 'info';
+  autoUpdater.checkForUpdatesAndNotify();
+
+  autoUpdater.on('update-available', () => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: 'A new version is available. The update will be downloaded automatically.',
+      buttons: ['OK']
+    });
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Ready',
+      message: 'Update has been downloaded. The application will restart to install the update.',
+      buttons: ['Restart']
+    }).then(() => {
+      autoUpdater.quitAndInstall(true, true);
+    });
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('AutoUpdater error:', err);
+  });
+}
+
 app.whenReady().then(() => {
-  tray = new Tray(path.join(__dirname, 'icon.png'));
+  checkForUpdates();
+  const iconPath = path.join(__dirname, 'icon.png');
+  let trayIcon;
+  try {
+    trayIcon = nativeImage.createFromPath(iconPath);
+    if (trayIcon.isEmpty()) {
+      console.error('Failed to load tray icon - image is empty');
+      trayIcon = nativeImage.createEmpty();
+    }
+    // Resize icon for better visibility
+    trayIcon = trayIcon.resize({ width: 16, height: 16 });
+  } catch (error) {
+    console.error('Failed to load tray icon:', error);
+    trayIcon = nativeImage.createEmpty();
+  }
+  tray = new Tray(trayIcon);
+
   
   const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'DS Mod Installer',
+      enabled: false,
+      icon: trayIcon
+    },
+    { type: 'separator' },
     {
       label: 'Restart',
       click: async () => {

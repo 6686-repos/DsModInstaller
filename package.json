@@ -1,13 +1,39 @@
 {
   "name": "dsmodinstaller",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "System tray application to manage sheltupdate process",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder build",
+    "publish": "electron-builder build --win -p always"
   },
+  "author": "6686-repos",
   "dependencies": {
-    "electron": "^25.3.1",
-    "simple-git": "^3.19.1"
+    "simple-git": "^3.19.1",
+    "electron-updater": "^6.1.1"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.6.3",
+    "electron": "^25.3.1"
+  },
+  "build": {
+    "appId": "com.dsmodinstaller.app",
+    "productName": "DS Mod Installer",
+    "win": {
+      "target": ["nsis"],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": false,
+      "include": "installer.nsh"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "6686-repos",
+      "repo": "DsModInstaller"
+    }
   }
 }
