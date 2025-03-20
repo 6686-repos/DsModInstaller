@@ -171,53 +171,31 @@ async function runInstaller() {
       return;
     }
   }
-  
-  // Function to execute the installer with retry logic
-  const executeWithRetry = async (maxRetries = 3, delay = 1000) => {
-    let retryCount = 0;
+  try {
+    console.log(`Running installer:`, installerPath);
     
-    while (retryCount < maxRetries) {
-      try {
-        console.log(`Running installer (attempt ${retryCount + 1}/${maxRetries}):`, installerPath);
-        
-        // Return a promise for execFile
-        await new Promise((resolve, reject) => {
-          execFile(installerPath, (error) => {
-            if (error) {
-              console.error(`Attempt ${retryCount + 1} failed:`, error.message);
-              reject(error);
-            } else {
-              console.log('Installer executed successfully');
-              resolve();
-            }
-          });
-        });
-        
-        // If we get here, execution was successful
-        return;
-      } catch (error) {
-        retryCount++;
-        
-        // If we've reached max retries, show error and exit
-        if (retryCount >= maxRetries) {
-          console.error('Failed to run installer after multiple attempts:', error);
-          dialog.showErrorBox('Error', `Failed to run Discord configurator: ${error.message}\n\nPlease try again later or run the installer manually.`);
-          return;
+    // Return a promise for execFile
+    await new Promise((resolve, reject) => {
+      execFile(installerPath, (error) => {
+        if (error) {
+          console.error(`Attempt ${retryCount + 1} failed:`, error.message);
+          reject(error);
+        } else {
+          console.log('Installer executed successfully');
+          resolve();
         }
-        
-        // Wait before retrying
-        console.log(`Waiting ${delay}ms before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
-        // Increase delay for next retry (exponential backoff)
-        delay *= 2;
-      }
-    }
-  };
-  
-  // Execute the installer with retry logic
-  await executeWithRetry();
+      });
+    });
+    
+    // If we get here, execution was successful
+    return;
+  } catch (error) {
+    console.error('Failed to run installer:', error);
+    dialog.showErrorBox('Error', 'Failed to run Discord configurator. Please check your internet connection and try again.');
+    return;
+  }
 }
+
 
 async function initialize() {
   try {
