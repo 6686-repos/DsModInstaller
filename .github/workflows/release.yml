@@ -1,0 +1,106 @@
+name: Release App
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force release even if version exists'
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get version from package.json
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
+      - name: Check if release exists
+        id: check_release
+        uses: actions/github-script@v6
+        if: ${{ !inputs.force_release }}
+        with:
+          script: |
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: 'v${{ steps.package-version.outputs.current-version }}'
+              });
+              return true;
+            } catch (error) {
+              return false;
+            }
+
+      - name: Build application
+        if: ${{ steps.check_release.outputs.result != 'true' || inputs.force_release }}
+        run: npm run build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        if: ${{ steps.check_release.outputs.result != 'true' || inputs.force_release }}
+        id: create_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Create the release
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: 'v${{ steps.package-version.outputs.current-version }}',
+              name: 'v${{ steps.package-version.outputs.current-version }}',
+              draft: false,
+              prerelease: false,
+              generate_release_notes: true
+            });
+            
+            // Find the installer file
+            const distDir = path.join(process.env.GITHUB_WORKSPACE, 'dist');
+            const files = fs.readdirSync(distDir);
+            
+            // Upload installer assets
+            for (const file of files) {
+              if (file.endsWith('.exe') && !file.includes('blockmap')) {
+                const filePath = path.join(distDir, file);
+                const fileStats = fs.statSync(filePath);
+                
+                await github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.data.id,
+                  name: file,
+                  data: fs.readFileSync(filePath),
+                  headers: {
+                    'content-type': 'application/octet-stream',
+                    'content-length': fileStats.size
+                  }
+                });
+                
+                console.log(`Uploaded ${file} to release`);
+              }
+            }
+            
+            return release.data.id;
