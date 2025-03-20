@@ -5,30 +5,33 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder build",
+    "prebuild": "taskkill /f /im dsmodinstaller.exe || exit 0",
+    "build": "electron-builder build --win",
     "publish": "electron-builder build --win -p always"
   },
   "author": "6686-repos",
   "dependencies": {
-    "simple-git": "^3.19.1",
-    "electron-updater": "^6.1.1"
+    "electron-log": "^5.0.1",
+    "electron-updater": "^6.1.1",
+    "simple-git": "^3.19.1"
   },
   "devDependencies": {
-    "electron-builder": "^24.6.3",
-    "electron": "^25.3.1"
+    "electron": "^25.9.8",
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.dsmodinstaller.app",
     "productName": "DS Mod Installer",
     "win": {
-      "target": ["nsis"],
-      "icon": "icon.png"
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": false,
-      "include": "installer.nsh"
+      "createDesktopShortcut": false
     },
     "publish": {
       "provider": "github",

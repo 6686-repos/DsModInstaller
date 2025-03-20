@@ -5,13 +5,18 @@ app.commandLine.appendSwitch('high-dpi-support', 'true');
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
 const path = require('path');
 const simpleGit = require('simple-git');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const fs = require('fs');
+const https = require('https');
+const { pipeline } = require('stream');
+const { promisify } = require('util');
+const pipelineAsync = promisify(pipeline);
 
 let tray = null;
 let nodeProcess = null;
 let appDataPath = path.join(process.env.APPDATA, 'dsmodinstaller');
 let repoPath = path.join(appDataPath, 'sheltupdate6686');
+let installerPath = path.join(appDataPath, 'install-shelter.exe');
 
 async function ensureDirectoryExists(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -95,6 +100,125 @@ function startNodeProcess() {
   });
 }
 
+function downloadInstaller() {
+  try {
+    console.log('Downloading shelter-installer.exe...');
+    const url = 'https://github.com/6686-repos/shelter-installer/releases/download/1.0.0/install-shelter.exe';
+    
+    // Ensure directory exists first, before creating the Promise
+    ensureDirectoryExists(appDataPath);
+    
+    return new Promise((resolve, reject) => {
+      // Create file stream
+      const file = fs.createWriteStream(installerPath);
+      
+      const handleDownload = (downloadUrl, redirectCount = 0) => {
+        // Limit redirects to prevent infinite loops
+        if (redirectCount > 5) {
+          reject(new Error('Too many redirects'));
+          return;
+        }
+        
+        https.get(downloadUrl, (response) => {
+          // Handle redirects (301, 302, 303, 307, 308)
+          if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+            console.log(`Redirect (${response.statusCode}) to: ${response.headers.location}`);
+            // Close the current response to prevent memory leaks
+            response.resume();
+            // Follow the redirect
+            handleDownload(response.headers.location, redirectCount + 1);
+            return;
+          }
+          
+          if (response.statusCode !== 200) {
+            reject(new Error(`Failed to download installer: ${response.statusCode} ${response.statusMessage}`));
+            return;
+          }
+          
+          pipelineAsync(response, file)
+            .then(() => {
+              console.log('Installer downloaded successfully to:', installerPath);
+              resolve(installerPath);
+            })
+            .catch(err => {
+              console.error('Download failed:', err);
+              reject(err);
+            });
+        }).on('error', (err) => {
+          fs.unlink(installerPath, () => {}); // Delete the file if download failed
+          console.error('Download error:', err);
+          reject(err);
+        });
+      };
+      
+      // Start the download process
+      handleDownload(url);
+    });
+  } catch (error) {
+    console.error('Error in downloadInstaller:', error);
+    throw error;
+  }
+}
+
+async function runInstaller() {
+  if (!fs.existsSync(installerPath)) {
+    console.error('Installer not found. Attempting to download...');
+    try {
+      await downloadInstaller();
+    } catch (error) {
+      console.error('Failed to download installer:', error);
+      dialog.showErrorBox('Error', 'Failed to download Discord configurator. Please check your internet connection and try again.');
+      return;
+    }
+  }
+  
+  // Function to execute the installer with retry logic
+  const executeWithRetry = async (maxRetries = 3, delay = 1000) => {
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`Running installer (attempt ${retryCount + 1}/${maxRetries}):`, installerPath);
+        
+        // Return a promise for execFile
+        await new Promise((resolve, reject) => {
+          execFile(installerPath, (error) => {
+            if (error) {
+              console.error(`Attempt ${retryCount + 1} failed:`, error.message);
+              reject(error);
+            } else {
+              console.log('Installer executed successfully');
+              resolve();
+            }
+          });
+        });
+        
+        // If we get here, execution was successful
+        return;
+      } catch (error) {
+        retryCount++;
+        
+        // If we've reached max retries, show error and exit
+        if (retryCount >= maxRetries) {
+          console.error('Failed to run installer after multiple attempts:', error);
+          dialog.showErrorBox('Error', `Failed to run Discord configurator: ${error.message}\n\nPlease try again later or run the installer manually.`);
+          return;
+        }
+        
+        // Wait before retrying
+        console.log(`Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Increase delay for next retry (exponential backoff)
+        delay *= 2;
+      }
+    }
+  };
+  
+  // Execute the installer with retry logic
+  await executeWithRetry();
+}
+
 async function initialize() {
   try {
     console.log('Starting initialization...');
@@ -104,6 +228,16 @@ async function initialize() {
     await installDependencies();
     console.log('Starting node process...');
     startNodeProcess();
+    
+    // Download the installer in the background
+    try {
+      downloadInstaller();
+      console.log('Installer downloaded successfully during initialization');
+    } catch (error) {
+      console.error('Failed to download installer during initialization:', error);
+      // Non-fatal error, continue with the app
+    }
+    
     console.log('Initialization completed successfully');
   } catch (error) {
     console.error('Initialization failed:', error.stack || error);
@@ -175,6 +309,12 @@ app.whenReady().then(() => {
       icon: trayIcon
     },
     { type: 'separator' },
+    {
+      label: 'Configure Discord',
+      click: () => {
+        runInstaller();
+      }
+    },
     {
       label: 'Restart',
       click: async () => {
