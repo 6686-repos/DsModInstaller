@@ -1,2 +1,4 @@
 node_modules
 dist
+# Ensure package-lock.json is not ignored
+!package-lock.json
