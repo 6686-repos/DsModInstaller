@@ -31,7 +31,8 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": false
+      "createDesktopShortcut": false,
+      "include": "installer.nsh"
     },
     "publish": {
       "provider": "github",
