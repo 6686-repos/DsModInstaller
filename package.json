@@ -5,7 +5,6 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "prebuild": "taskkill /f /im dsmodinstaller.exe || exit 0",
     "build": "electron-builder build --win",
     "publish": "electron-builder build --win -p always"
   },
