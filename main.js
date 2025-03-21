@@ -247,10 +247,24 @@ function checkForUpdates() {
   autoUpdater.logger = require('electron-log');
   autoUpdater.logger.transports.file.level = 'info';
 
+  autoUpdater.on('error', (error) => {
+    console.error('Auto Updater error:', error);
+    dialog.showErrorBox('Update Error', 'An error occurred while checking for updates.');
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info);
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: 'A new version is being downloaded. You will be notified when it is ready.',
+      buttons: ['OK']
+    });
+  });
+
   // Handle when no update is available
   autoUpdater.on('update-not-available', () => {
     console.log('No update available, continuing normal operation');
-    // Don't quit, just continue running
   });
 
   // Only quit when an update is actually downloaded and ready
@@ -268,7 +282,6 @@ function checkForUpdates() {
   // Check for updates but don't force quit
   autoUpdater.checkForUpdates().catch(err => {
     console.error('Update check failed:', err);
-    // Continue running even if update check fails
   });
 }
 
