@@ -25,7 +25,8 @@
       "target": [
         "nsis"
       ],
-      "icon": "icon.ico"
+      "icon": "icon.ico",
+      "artifactName": "${productName}-Setup-${version}.exe"
     },
     "nsis": {
       "oneClick": false,
