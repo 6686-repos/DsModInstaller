@@ -247,24 +247,17 @@ function checkForUpdates() {
   autoUpdater.logger = require('electron-log');
   autoUpdater.logger.transports.file.level = 'info';
   
-  // Add error handling and logging
-  try {
-    autoUpdater.checkForUpdatesAndNotify().catch(err => {
-      console.error('Update check failed:', err);
-    });
-  } catch (error) {
-    console.error('Error during update check:', error);
-  }
-
-  autoUpdater.on('update-available', () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: 'A new version is available. The update will be downloaded automatically.',
-      buttons: ['OK']
-    });
+  autoUpdater.on('error', (err) => {
+    console.error('Update error:', err);
   });
-
+  
+  // Handle when no update is available
+  autoUpdater.on('update-not-available', () => {
+    console.log('No update available, continuing normal startup');
+    initialize(); // Continue with normal app initialization
+  });
+  
+  // Only quit and install when update is downloaded
   autoUpdater.on('update-downloaded', () => {
     dialog.showMessageBox({
       type: 'info',
@@ -276,8 +269,10 @@ function checkForUpdates() {
     });
   });
 
-  autoUpdater.on('error', (err) => {
-    console.error('AutoUpdater error:', err);
+  // Check for updates
+  autoUpdater.checkForUpdates().catch(err => {
+    console.error('Update check failed:', err);
+    initialize(); // Continue with normal app initialization even if update check fails
   });
 }
 
