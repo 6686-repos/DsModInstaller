@@ -81,13 +81,13 @@ jobs:
               generate_release_notes: true
             });
             
-            // Find the installer file
+            // Find and upload files
             const distDir = path.join(process.env.GITHUB_WORKSPACE, 'dist');
             const files = fs.readdirSync(distDir);
             
             // Upload installer assets
             for (const file of files) {
-              if (file.endsWith('.exe') && !file.includes('blockmap')) {
+              if ((file.endsWith('.exe') && !file.includes('blockmap')) || file === 'latest.yml') {
                 const filePath = path.join(distDir, file);
                 const fileStats = fs.statSync(filePath);
                 
@@ -98,7 +98,7 @@ jobs:
                   name: file,
                   data: fs.readFileSync(filePath),
                   headers: {
-                    'content-type': 'application/octet-stream',
+                    'content-type': file === 'latest.yml' ? 'application/x-yaml' : 'application/octet-stream',
                     'content-length': fileStats.size
                   }
                 });
