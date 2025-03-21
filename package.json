@@ -1,10 +1,11 @@
 {
   "name": "dsmodinstaller",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "description": "System tray application to manage sheltupdate process",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "prebuild": "taskkill /f /im dsmodinstaller.exe || exit 0",
     "build": "electron-builder build --win",
     "publish": "electron-builder build --win -p always"
   },
@@ -12,7 +13,6 @@
   "dependencies": {
     "electron-log": "^5.0.1",
     "electron-updater": "^6.1.1",
-    "regedit": "^5.1.3",
     "simple-git": "^3.19.1"
   },
   "devDependencies": {

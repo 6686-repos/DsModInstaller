@@ -1,6 +1,5 @@
 const { app, Tray, Menu, nativeImage, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const regedit = require('regedit').promisified;
 
 app.commandLine.appendSwitch('high-dpi-support', 'true');
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
@@ -18,28 +17,6 @@ let nodeProcess = null;
 let appDataPath = path.join(process.env.APPDATA, 'dsmodinstaller');
 let repoPath = path.join(appDataPath, 'sheltupdate6686');
 let installerPath = path.join(appDataPath, 'install-shelter.exe');
-let buttonName = 'Enable startup';
-
-async function toggleStartup() {
-  const keyPath = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
-  const valueName = 'DS Mod Installer';
-  const listResult = await regedit.list(keyPath);
-  if (listResult.includes(valueName)) {
-    buttonName = 'Disable startup';
-    await regedit.deleteKey(keyPath, valueName);
-    console.log('Startup disabled');
-  } else {
-    buttonName = 'Enable startup';
-    await regedit.putValue({
-      [keyPath]: {
-        [valueName]: {
-          value: `"${process.execPath}"`,
-          type: 'REG_SZ'
-        }
-      }
-    });
-  }
-}
 
 async function ensureDirectoryExists(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -317,7 +294,7 @@ app.whenReady().then(() => {
       }
     },
     {
-      label: 'Restart sheltupdate',
+      label: 'Restart',
       click: async () => {
         try {
           await cloneOrPullRepo();
@@ -326,12 +303,6 @@ app.whenReady().then(() => {
         } catch (error) {
           console.error('Failed to restart process:', error);
         }
-      }
-    },
-    {
-      label: buttonName,
-      click: async () => {
-        await toggleStartup();
       }
     },
     {
