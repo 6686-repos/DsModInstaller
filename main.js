@@ -24,7 +24,7 @@ async function toggleStartup() {
   const keyPath = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
   const valueName = 'DS Mod Installer';
   const listResult = await regedit.list(keyPath);
-  if (valueName in listResult) {
+  if (listResult.includes(valueName)) {
     buttonName = 'Disable startup';
     await regedit.deleteKey(keyPath, valueName);
     console.log('Startup disabled');
@@ -38,8 +38,6 @@ async function toggleStartup() {
         }
       }
     });
-    console.log('Startup enabled');
-    
   }
 }
 
