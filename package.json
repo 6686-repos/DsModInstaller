@@ -1,6 +1,6 @@
 {
   "name": "dsmodinstaller",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "System tray application to manage sheltupdate process",
   "main": "main.js",
   "scripts": {

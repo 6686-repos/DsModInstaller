@@ -246,18 +246,14 @@ async function initialize() {
 function checkForUpdates() {
   autoUpdater.logger = require('electron-log');
   autoUpdater.logger.transports.file.level = 'info';
-  
-  autoUpdater.on('error', (err) => {
-    console.error('Update error:', err);
-  });
-  
+
   // Handle when no update is available
   autoUpdater.on('update-not-available', () => {
-    console.log('No update available, continuing normal startup');
-    initialize(); // Continue with normal app initialization
+    console.log('No update available, continuing normal operation');
+    // Don't quit, just continue running
   });
-  
-  // Only quit and install when update is downloaded
+
+  // Only quit when an update is actually downloaded and ready
   autoUpdater.on('update-downloaded', () => {
     dialog.showMessageBox({
       type: 'info',
@@ -265,14 +261,14 @@ function checkForUpdates() {
       message: 'Update has been downloaded. The application will restart to install the update.',
       buttons: ['Restart']
     }).then(() => {
-      autoUpdater.quitAndInstall(true, true);
+      autoUpdater.quitAndInstall(false, true);
     });
   });
 
-  // Check for updates
+  // Check for updates but don't force quit
   autoUpdater.checkForUpdates().catch(err => {
     console.error('Update check failed:', err);
-    initialize(); // Continue with normal app initialization even if update check fails
+    // Continue running even if update check fails
   });
 }
 
