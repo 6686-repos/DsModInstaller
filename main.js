@@ -200,33 +200,45 @@ async function runInstaller() {
 async function initialize() {
   try {
     console.log('Starting initialization...');
+    
+    // Add more detailed logging
+    console.log('Environment:', {
+      appDataPath,
+      repoPath,
+      installerPath
+    });
+    
     console.log('Cloning or pulling repository...');
     await cloneOrPullRepo();
+    
     console.log('Installing dependencies...');
     await installDependencies();
+    
     console.log('Starting node process...');
     startNodeProcess();
     
-    // Download the installer in the background
-    try {
-      downloadInstaller();
-      console.log('Installer downloaded successfully during initialization');
-    } catch (error) {
+    // Download the installer in the background with proper error handling
+    downloadInstaller().catch(error => {
       console.error('Failed to download installer during initialization:', error);
       // Non-fatal error, continue with the app
-    }
+    });
     
     console.log('Initialization completed successfully');
   } catch (error) {
     console.error('Initialization failed:', error.stack || error);
-    if (error.message.includes('Failed to start npm')) {
-      console.error('Failed to start npm. Please ensure npm is installed and accessible in your PATH.');
-    } else if (error.message.includes('npm install failed')) {
-      console.error('Failed to install dependencies. Check the error log above for details.');
-      console.error('Common solutions:\n1. Check your internet connection\n2. Clear npm cache (run npm cache clean --force)\n3. Delete node_modules folder and try again');
-    } else if (error.message.includes('git')) {
-      console.error('Failed to clone/pull repository. Please check your internet connection and try again.');
-    }
+    // Add more detailed error information
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code
+    });
+    
+    // Show error to user before quitting
+    dialog.showErrorBox(
+      'Initialization Error',
+      `Failed to start application: ${error.message}\nPlease check the logs for more details.`
+    );
+    
     app.quit();
   }
 }
@@ -234,7 +246,15 @@ async function initialize() {
 function checkForUpdates() {
   autoUpdater.logger = require('electron-log');
   autoUpdater.logger.transports.file.level = 'info';
-  autoUpdater.checkForUpdatesAndNotify();
+  
+  // Add error handling and logging
+  try {
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+      console.error('Update check failed:', err);
+    });
+  } catch (error) {
+    console.error('Error during update check:', error);
+  }
 
   autoUpdater.on('update-available', () => {
     dialog.showMessageBox({
@@ -261,8 +281,11 @@ function checkForUpdates() {
   });
 }
 
-app.whenReady().then(() => {
-  checkForUpdates();
+app.whenReady().then(async () => {
+  // Run update check in background
+  setTimeout(checkForUpdates, 1000);
+  
+  // Continue with app initialization immediately
   const iconPath = path.join(__dirname, 'icon.png');
   let trayIcon;
   try {
