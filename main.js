@@ -19,6 +19,37 @@ let nodeProcess = null;
 let appDataPath = path.join(process.env.APPDATA, 'dsmodinstaller');
 let repoPath = path.join(appDataPath, 'sheltupdate6686');
 let installerPath = path.join(appDataPath, 'install-shelter.exe');
+let logPath = path.join(appDataPath, 'logs', 'main.log' );
+
+function countfilelines(file) {
+  return new Promise((resolve, reject) => {
+    let count = 0;
+    fs.createReadStream(file)
+      .on('data', (chunk) => {
+        count += chunk.toString().split('\n').length - 1;
+      })
+      .on('end', () => {
+        resolve(count);
+      })
+      .on('error', (err) => reject(err))
+      .on('end', () => resolve(count));
+  });
+};
+
+async function deleteFile(filePath) {
+  try {
+    await fs.promises.unlink(filePath);
+    log.log(`Successfully deleted file: ${filePath}`);
+  } catch (error) {
+    log.error(`Error deleting file ${filePath}:`, error);
+    throw error;
+  }
+}
+
+//delete log file if too big
+if (countfilelines(logPath) >= 100000) {
+  deleteFile(logPath);
+}
 
 async function ensureDirectoryExists(dirPath) {
   if (!fs.existsSync(dirPath)) {
