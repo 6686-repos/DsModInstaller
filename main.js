@@ -12,6 +12,7 @@ const { pipeline } = require('stream');
 const { promisify } = require('util');
 const { parseUpdateInfo } = require('electron-updater/out/providers/Provider');
 const pipelineAsync = promisify(pipeline);
+const log = require('electron-log');
 
 let tray = null;
 let nodeProcess = null;
@@ -31,23 +32,23 @@ async function cloneOrPullRepo() {
     const git = simpleGit();
     
     if (!fs.existsSync(repoPath)) {
-      console.log('Repository not found, attempting to clone...');
+      log.log('Repository not found, attempting to clone...');
       await git.clone('https://github.com/6686-repos/sheltupdate6686', repoPath);
-      console.log('Repository cloned successfully');
+      log.log('Repository cloned successfully');
     } else {
-      console.log('Repository exists, pulling latest changes...');
+      log.log('Repository exists, pulling latest changes...');
       await git.cwd(repoPath).pull();
-      console.log('Repository updated successfully');
+      log.log('Repository updated successfully');
     }
   } catch (error) {
-    console.error('Git operation failed:', error.message);
+    log.error('Git operation failed:', error.message);
     throw new Error(`Git operation failed: ${error.message}`);
   }
 }
 
 async function installDependencies() {
   return new Promise((resolve, reject) => {
-    console.log('Starting npm install...');
+    log.log('Starting npm install...');
     const npm = spawn('npm', ['install'], { cwd: repoPath, shell: true });
     
     let stdoutData = '';
@@ -55,26 +56,26 @@ async function installDependencies() {
     
     npm.stdout.on('data', (data) => {
       stdoutData += data;
-      console.log(`npm install output: ${data}`);
+      log.log(`npm install output: ${data}`);
     });
     
     npm.stderr.on('data', (data) => {
       stderrData += data;
-      console.error(`npm install error: ${data}`);
+      log.error(`npm install error: ${data}`);
     });
     
     npm.on('error', (error) => {
-      console.error('Failed to start npm process:', error);
+      log.error('Failed to start npm process:', error);
       reject(new Error(`Failed to start npm: ${error.message}`));
     });
     
     npm.on('close', (code) => {
       if (code === 0) {
-        console.log('npm install completed successfully');
+        log.log('npm install completed successfully');
         resolve();
       } else {
         const errorMessage = `npm install failed with code ${code}\nOutput: ${stdoutData}\nErrors: ${stderrData}`;
-        console.error(errorMessage);
+        log.error(errorMessage);
         reject(new Error(errorMessage));
       }
     });
@@ -89,21 +90,21 @@ function startNodeProcess() {
   nodeProcess = spawn('node', ['src/index.js'], { cwd: repoPath });
   
   nodeProcess.stdout.on('data', (data) => {
-    console.log(`stdout: ${data}`);
+    log.log(`stdout: ${data}`);
   });
   
   nodeProcess.stderr.on('data', (data) => {
-    console.error(`stderr: ${data}`);
+    log.error(`stderr: ${data}`);
   });
   
   nodeProcess.on('close', (code) => {
-    console.log(`Child process exited with code ${code}`);
+    log.log(`Child process exited with code ${code}`);
   });
 }
 
 function downloadInstaller() {
   try {
-    console.log('Downloading shelter-installer.exe...');
+    log.log('Downloading shelter-installer.exe...');
     const url = 'https://github.com/6686-repos/shelter-installer/releases/download/1.0.0/install-shelter.exe';
     
     // Ensure directory exists first, before creating the Promise
@@ -123,7 +124,7 @@ function downloadInstaller() {
         https.get(downloadUrl, (response) => {
           // Handle redirects (301, 302, 303, 307, 308)
           if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-            console.log(`Redirect (${response.statusCode}) to: ${response.headers.location}`);
+            log.log(`Redirect (${response.statusCode}) to: ${response.headers.location}`);
             // Close the current response to prevent memory leaks
             response.resume();
             // Follow the redirect
@@ -138,16 +139,16 @@ function downloadInstaller() {
           
           pipelineAsync(response, file)
             .then(() => {
-              console.log('Installer downloaded successfully to:', installerPath);
+              log.log('Installer downloaded successfully to:', installerPath);
               resolve(installerPath);
             })
             .catch(err => {
-              console.error('Download failed:', err);
+              log.error('Download failed:', err);
               reject(err);
             });
         }).on('error', (err) => {
           fs.unlink(installerPath, () => {}); // Delete the file if download failed
-          console.error('Download error:', err);
+          log.error('Download error:', err);
           reject(err);
         });
       };
@@ -156,33 +157,33 @@ function downloadInstaller() {
       handleDownload(url);
     });
   } catch (error) {
-    console.error('Error in downloadInstaller:', error);
+    log.error('Error in downloadInstaller:', error);
     throw error;
   }
 }
 
 async function runInstaller() {
   if (!fs.existsSync(installerPath)) {
-    console.error('Installer not found. Attempting to download...');
+    log.error('Installer not found. Attempting to download...');
     try {
       await downloadInstaller();
     } catch (error) {
-      console.error('Failed to download installer:', error);
+      log.error('Failed to download installer:', error);
       dialog.showErrorBox('Error', 'Failed to download Discord configurator. Please check your internet connection and try again.');
       return;
     }
   }
   try {
-    console.log(`Running installer:`, installerPath);
+    log.log(`Running installer:`, installerPath);
     
     // Return a promise for execFile
     await new Promise((resolve, reject) => {
       execFile(installerPath, (error) => {
         if (error) {
-          console.error(`Attempt ${retryCount + 1} failed:`, error.message);
+          log.error(`Attempt ${retryCount + 1} failed:`, error.message);
           reject(error);
         } else {
-          console.log('Installer executed successfully');
+          log.log('Installer executed successfully');
           resolve();
         }
       });
@@ -191,7 +192,7 @@ async function runInstaller() {
     // If we get here, execution was successful
     return;
   } catch (error) {
-    console.error('Failed to run installer:', error);
+    log.error('Failed to run installer:', error);
     dialog.showErrorBox('Error', 'Failed to run Discord configurator. Please check your internet connection and try again.');
     return;
   }
@@ -200,35 +201,35 @@ async function runInstaller() {
 
 async function initialize() {
   try {
-    console.log('Starting initialization...');
+    log.log('Starting initialization...');
     
     // Add more detailed logging
-    console.log('Environment:', {
+    log.log('Environment:', {
       appDataPath,
       repoPath,
       installerPath
     });
     
-    console.log('Cloning or pulling repository...');
+    log.log('Cloning or pulling repository...');
     await cloneOrPullRepo();
     
-    console.log('Installing dependencies...');
+    log.log('Installing dependencies...');
     await installDependencies();
     
-    console.log('Starting node process...');
+    log.log('Starting node process...');
     startNodeProcess();
     
     // Download the installer in the background with proper error handling
     downloadInstaller().catch(error => {
-      console.error('Failed to download installer during initialization:', error);
+      log.error('Failed to download installer during initialization:', error);
       // Non-fatal error, continue with the app
     });
     
-    console.log('Initialization completed successfully');
+    log.log('Initialization completed successfully');
   } catch (error) {
-    console.error('Initialization failed:', error.stack || error);
+    log.error('Initialization failed:', error.stack || error);
     // Add more detailed error information
-    console.error('Error details:', {
+    log.error('Error details:', {
       name: error.name,
       message: error.message,
       code: error.code
@@ -244,69 +245,21 @@ async function initialize() {
   }
 }
 
-function checkForUpdates() {
-  autoUpdater.logger = require('electron-log');
-  autoUpdater.logger.transports.file.level = 'info';
-  autoUpdater.on('error', (error) => {
-    console.error('Auto Updater error:', error);
-    dialog.showErrorBox('Update Error', 'An error occurred while checking for updates.');
-  });
-
-  autoUpdater.on('update-available', (info) => {
-    console.log('Update available:', info);
-    if (!info.version === app.getVersion()) {
-      dialog.showMessageBox({
-        type: 'info',
-        title: 'Update Available',
-        message: 'A new version is being downloaded. You will be notified when it is ready.',
-        buttons: ['OK']
-      });
-    } else {
-      console.log('Already on the latest version');
-      return 1;
-    }
-  });
-
-  // Handle when no update is available
-  autoUpdater.on('update-not-available', () => {
-    console.log('No update available, continuing normal operation');
-  });
-
-  // Only quit when an update is actually downloaded and ready
-  autoUpdater.on('update-downloaded', () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Ready',
-      message: 'Update has been downloaded. The application will restart to install the update.',
-      buttons: ['Restart']
-    }).then(() => {
-      autoUpdater.quitAndInstall(false, true);
-    });
-  });
-
-  // Check for updates but don't force quit
-  autoUpdater.checkForUpdates().catch(err => {
-    console.error('Update check failed:', err);
-  });
-}
-
-app.whenReady().then(async () => {
-  // Run update check in background
-  setTimeout(checkForUpdates, 1000);
-  
+async function actuallyrunTheFuckingApp() {
+  log.log('Autoupdater finished');
   // Continue with app initialization immediately
   const iconPath = path.join(__dirname, 'icon.png');
   let trayIcon;
   try {
     trayIcon = nativeImage.createFromPath(iconPath);
     if (trayIcon.isEmpty()) {
-      console.error('Failed to load tray icon - image is empty');
+      log.error('Failed to load tray icon - image is empty');
       trayIcon = nativeImage.createEmpty();
     }
     // Resize icon for better visibility
     trayIcon = trayIcon.resize({ width: 16, height: 16 });
   } catch (error) {
-    console.error('Failed to load tray icon:', error);
+    log.error('Failed to load tray icon:', error);
     trayIcon = nativeImage.createEmpty();
   }
   tray = new Tray(trayIcon);
@@ -333,7 +286,7 @@ app.whenReady().then(async () => {
           await installDependencies();
           startNodeProcess();
         } catch (error) {
-          console.error('Failed to restart process:', error);
+          log.error('Failed to restart process:', error);
         }
       }
     },
@@ -352,6 +305,29 @@ app.whenReady().then(async () => {
   tray.setContextMenu(contextMenu);
   
   initialize();
+};
+
+async function checkForUpdates() {
+  try {
+    log.log('Checking for updates...');
+    await autoUpdater.checkForUpdates();
+    log.log('Update check completed'); 
+  }
+  catch (error) {
+    log.error('Error checking for updates:', error);
+  }
+  
+  autoUpdater.on('update-not-available', () => {
+    log.log('No updates available, starting');
+  });
+  autoUpdater.on('update-downloaded', (info) => {
+    autoUpdater.quitAndInstall();
+  })
+  actuallyrunTheFuckingApp();
+};
+
+app.whenReady().then(async () => {
+  checkForUpdates();
 });
 
 app.on('window-all-closed', () => {
