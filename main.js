@@ -247,7 +247,6 @@ async function initialize() {
 function checkForUpdates() {
   autoUpdater.logger = require('electron-log');
   autoUpdater.logger.transports.file.level = 'info';
-  if (lat)
   autoUpdater.on('error', (error) => {
     console.error('Auto Updater error:', error);
     dialog.showErrorBox('Update Error', 'An error occurred while checking for updates.');
