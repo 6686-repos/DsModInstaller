@@ -245,7 +245,7 @@ async function initialize() {
   }
 }
 
-async function actuallyrunTheFuckingApp() {
+async function runApp() {
   log.log('Autoupdater finished');
   // Continue with app initialization immediately
   const iconPath = path.join(__dirname, 'icon.png');
@@ -316,14 +316,34 @@ async function checkForUpdates() {
   catch (error) {
     log.error('Error checking for updates:', error);
   }
-  
+
   autoUpdater.on('update-not-available', () => {
     log.log('No updates available, starting');
   });
-  autoUpdater.on('update-downloaded', (info) => {
-    autoUpdater.quitAndInstall();
+  
+  autoUpdater.on('update-available', (info) => {
+    log.log(`Update available: ${app.getVersion()} → ${info.version}`);
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: `A new version (${info.version}) is being downloaded. You will be notified when it is ready.`,
+      buttons: ['OK']
+    });
   })
-  actuallyrunTheFuckingApp();
+
+  autoUpdater.on('update-downloaded', (info) => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Ready',
+      message: 'Update has been downloaded. The application will restart to install the update.',
+      buttons: ['Restart Now', 'Later']
+    }).then((buttonIndex) => {
+      if (buttonIndex.response === 0) {
+        autoUpdater.quitAndInstall(false, true);
+      }
+    });
+  })
+  runApp();
 };
 
 app.whenReady().then(async () => {
