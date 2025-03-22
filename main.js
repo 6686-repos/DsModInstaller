@@ -325,7 +325,7 @@ async function runApp() {
     {
       label: 'Read Logs',
       click: () => {
-        exec(`Get-Content "${logPath}" -Wait`, {'shell':'powershell.exe'}, (error, stdout, stderr)=> {
+        exec(`Get-Content "${logPath}" -Wait`, {'shell':'powershell.exe'}, {'windowsHide':'false'}, (error, stdout, stderr)=> {
         })
       }
     },
