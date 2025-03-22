@@ -10,6 +10,7 @@ const fs = require('fs');
 const https = require('https');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
+const { parseUpdateInfo } = require('electron-updater/out/providers/Provider');
 const pipelineAsync = promisify(pipeline);
 
 let tray = null;
@@ -246,7 +247,7 @@ async function initialize() {
 function checkForUpdates() {
   autoUpdater.logger = require('electron-log');
   autoUpdater.logger.transports.file.level = 'info';
-
+  if (lat)
   autoUpdater.on('error', (error) => {
     console.error('Auto Updater error:', error);
     dialog.showErrorBox('Update Error', 'An error occurred while checking for updates.');
@@ -254,12 +255,17 @@ function checkForUpdates() {
 
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info);
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: 'A new version is being downloaded. You will be notified when it is ready.',
-      buttons: ['OK']
-    });
+    if (!info.version === app.getVersion()) {
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Update Available',
+        message: 'A new version is being downloaded. You will be notified when it is ready.',
+        buttons: ['OK']
+      });
+    } else {
+      console.log('Already on the latest version');
+      return 1;
+    }
   });
 
   // Handle when no update is available
