@@ -46,9 +46,46 @@ async function deleteFile(filePath) {
   }
 }
 
-//delete log file if too big
-if (countfilelines(logPath) >= 100000) {
-  deleteFile(logPath);
+// delete log file if too big
+(async () => {
+  try {
+    const lineCount = await countfilelines(logPath);
+    if (lineCount >= 2500) {
+      deleteFile(logPath);
+    }
+    log.log(`Log file is ${lineCount} lines, ${lineCount >= 2500 ? 'deleting' : 'no action needed'}`);
+  } catch (error) {
+    log.error('Error checking log file size:', error);
+  }
+})();
+
+async function executePowershellCommand(command) {
+  // Use cmd.exe to start a new PowerShell window
+  const shell = 'cmd.exe';
+  const args = [
+      '/c', // Run the following command and terminate
+      'start',
+      'powershell.exe',
+      '-NoExit',
+      '-Command',
+      command
+  ];
+
+  // Log the command for debugging
+  log.log(`Executing PowerShell command: ${command}`);
+
+  // Spawn the process
+  const child = spawn(shell, args, { stdio: 'inherit' });
+
+  // Handle errors
+  child.on('error', (err) => {
+      log.error(`Failed to start PowerShell command: ${err}`);
+  });
+
+  // Handle process exit
+  child.on('close', (code) => {
+      log.log(`PowerShell command exited with code ${code}`);
+  });
 }
 
 async function ensureDirectoryExists(dirPath) {
@@ -310,7 +347,7 @@ async function runApp() {
       }
     },
     {
-      label: 'Restart',
+      label: 'Restart Sheltupdate',
       click: async () => {
         try {
           await cloneOrPullRepo();
@@ -319,6 +356,13 @@ async function runApp() {
         } catch (error) {
           log.error('Failed to restart process:', error);
         }
+      }
+    },
+    {type:'separator'},
+    {
+      label: 'Read Logs',
+      click:async () => {
+        executePowershellCommand(`Get-Content "${logPath}" -Wait`);
       }
     },
     {
