@@ -5,7 +5,7 @@ app.commandLine.appendSwitch('high-dpi-support', 'true');
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
 const path = require('path');
 const simpleGit = require('simple-git');
-const { spawn, execFile, exec } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const fs = require('fs');
 const https = require('https');
 const { pipeline } = require('stream');
