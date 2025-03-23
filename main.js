@@ -310,7 +310,7 @@ async function runApp() {
       }
     },
     {
-      label: 'Restart Sheltupdate',
+      label: 'Restart',
       click: async () => {
         try {
           await cloneOrPullRepo();
@@ -319,14 +319,6 @@ async function runApp() {
         } catch (error) {
           log.error('Failed to restart process:', error);
         }
-      }
-    },
-    { type:'separator' },
-    {
-      label: 'Read Logs',
-      click: () => {
-        exec(`Get-Content "${logPath}" -Wait`, {'shell':'powershell.exe'}, (error, stdout, stderr)=> {
-        })
       }
     },
     {
