@@ -81,11 +81,6 @@ async function executePowershellCommand(command) {
   child.on('error', (err) => {
       log.error(`Failed to start PowerShell command: ${err}`);
   });
-
-  // Handle process exit
-  child.on('close', (code) => {
-      log.log(`PowerShell command exited with code ${code}`);
-  });
 }
 
 async function ensureDirectoryExists(dirPath) {
