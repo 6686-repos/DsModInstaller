@@ -50,10 +50,11 @@ async function deleteFile(filePath) {
 (async () => {
   try {
     const lineCount = await countfilelines(logPath);
-    if (lineCount >= 2500) {
+    const maxLogSize = 50000;
+    if (lineCount >= maxLogSize) {
       deleteFile(logPath);
     }
-    log.log(`Log file is ${lineCount} lines, ${lineCount >= 2500 ? 'deleting' : 'no action needed'}`);
+    log.log(`Log file is ${lineCount} lines, ${lineCount >= maxLogSize ? 'deleting' : 'no action needed'}`);
   } catch (error) {
     log.error('Error checking log file size:', error);
   }
